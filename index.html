@@ -732,17 +732,18 @@
                     <textarea id="content-input" placeholder="请输入交易内容，支持多种格式：
 
 例如：
-1. 标准格式：
-北京光华路
+佛山系
 买入
-中国稀土 5.13亿
+远大控股 1421万
+卖出
+平潭发展
+1.12亿
 
-2. 连续格式：
-作手新一 买入 多氟多 5153万
-深南东路 卖出 永鼎股份 1.88亿
-
-3. 段落格式：
-陈小群今天买入了华虹公司1.34亿，同时卖出了另一只股票2000万。"></textarea>
+成都系
+买入
+创新医疗 7966万
+万润科技 5670万
+郑州煤电 1579万"></textarea>
                     <button id="process-btn">
                         <div class="icon">
                             <svg viewBox="0 0 24 24">
@@ -1088,7 +1089,7 @@
             updateStats(result);
         });
         
-        // 智能解析交易内容
+        // 智能解析交易内容 - 修复版
         function processContent(content) {
             const result = [];
             
@@ -1111,7 +1112,7 @@
                     
                     if (lines.length > 0 && lines[0] === trader) {
                         foundTrader = true;
-                        parseStandardFormat(lines, traderRecords);
+                        parseComplexFormat(lines, traderRecords);
                     }
                 });
                 
@@ -1140,8 +1141,8 @@
             return result;
         }
         
-        // 解析标准格式
-        function parseStandardFormat(lines, traderRecords) {
+        // 解析复杂格式 - 支持多行交易记录
+        function parseComplexFormat(lines, traderRecords) {
             let currentAction = '';
             
             for (let i = 1; i < lines.length; i++) {
@@ -1152,16 +1153,56 @@
                 } else if (line === '卖出' || line.includes('卖出')) {
                     currentAction = 'sell';
                 } else if (currentAction && line) {
-                    // 提取股票和金额 - 使用更灵活的正则表达式
-                    const stockMatch = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(万|亿)/);
-                    if (stockMatch) {
-                        const stock = stockMatch[1].trim();
-                        const amount = stockMatch[2] + stockMatch[3];
-                        
-                        if (currentAction === 'buy') {
-                            traderRecords.buy.push(`${stock} ${amount}`);
-                        } else if (currentAction === 'sell') {
-                            traderRecords.sell.push(`${stock} ${amount}`);
+                    // 检查是否是股票名称行
+                    const isStockLine = !line.includes('万') && !line.includes('亿') && 
+                                       !line.includes('买入') && !line.includes('卖出');
+                    
+                    if (isStockLine) {
+                        // 这可能是股票名称行，检查下一行是否是金额
+                        if (i + 1 < lines.length) {
+                            const nextLine = lines[i + 1];
+                            const amountMatch = nextLine.match(/(\d+(?:\.\d+)?)\s*(万|亿)/);
+                            
+                            if (amountMatch) {
+                                // 合并股票名称和金额
+                                const stock = line;
+                                const amount = amountMatch[1] + amountMatch[2];
+                                
+                                if (currentAction === 'buy') {
+                                    traderRecords.buy.push(`${stock} ${amount}`);
+                                } else if (currentAction === 'sell') {
+                                    traderRecords.sell.push(`${stock} ${amount}`);
+                                }
+                                
+                                i++; // 跳过下一行
+                            } else {
+                                // 下一行不是金额，可能是新的操作或股票名称
+                                if (currentAction === 'buy') {
+                                    traderRecords.buy.push(`${line}`);
+                                } else if (currentAction === 'sell') {
+                                    traderRecords.sell.push(`${line}`);
+                                }
+                            }
+                        } else {
+                            // 没有下一行，直接添加股票名称
+                            if (currentAction === 'buy') {
+                                traderRecords.buy.push(`${line}`);
+                            } else if (currentAction === 'sell') {
+                                traderRecords.sell.push(`${line}`);
+                            }
+                        }
+                    } else {
+                        // 这一行包含金额，直接提取
+                        const stockMatch = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(万|亿)/);
+                        if (stockMatch) {
+                            const stock = stockMatch[1].trim();
+                            const amount = stockMatch[2] + stockMatch[3];
+                            
+                            if (currentAction === 'buy') {
+                                traderRecords.buy.push(`${stock} ${amount}`);
+                            } else if (currentAction === 'sell') {
+                                traderRecords.sell.push(`${stock} ${amount}`);
+                            }
                         }
                     }
                 }
