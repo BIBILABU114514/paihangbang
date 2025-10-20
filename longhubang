@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票交易排行榜管理系统</title>
+    <style>
+        :root {
+            --primary: #1a2a6c;
+            --secondary: #b21f1f;
+            --accent: #fdbb2d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+            --white: #ffffff;
+            --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --hover-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 30px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary), var(--accent));
+            border-radius: 3px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+        
+        .panel:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .panel h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel h2 .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        
+        input, textarea, button, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 42, 108, 0.1);
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        
+        button {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15);
+        }
+        
+        .rank-list-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 10px;
+            background: var(--light);
+        }
+        
+        .rank-list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .rank-list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .rank-list-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .rank-list-container::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+        
+        .rank-list {
+            list-style-type: none;
+        }
+        
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 12px;
+            background: var(--white);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            cursor: move;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .rank-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .rank-item.dragging {
+            opacity: 0.7;
+            background: #e9ecef;
+            transform: scale(1.02);
+        }
+        
+        .rank-item .rank-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .rank-number {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 0.9rem;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .trader-name {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+        
+        .rank-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            width: auto;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        
+        .btn-edit {
+            background: var(--info);
+        }
+        
+        .btn-remove {
+            background: var(--danger);
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .quick-actions button {
+            flex: 1;
+            margin-top: 0;
+            padding: 12px;
+        }
+        
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .edit-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+        
+        .edit-modal.active .edit-modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .edit-modal h3 {
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        
+        .modal-actions button {
+            flex: 1;
+            margin-top: 0;
+        }
+        
+        .btn-cancel {
+            background: var(--gray);
+        }
+        
+        .btn-save {
+            background: var(--success);
+        }
+        
+        .result-panel {
+            grid-column: 1 / -1;
+        }
+        
+        .result-item {
+            padding: 20px;
+            margin-bottom: 20px;
+            background: var(--white);
+            border-radius: 12px;
+            border-left: 4px solid var(--success);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            transition: var(--transition);
+        }
+        
+        .result-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        
+        .result-item h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .transaction-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .transaction-details div {
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .highlight {
+            background-color: rgba(255, 193, 7, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .export-btn {
+            background: linear-gradient(to right, var(--success), #20c997);
+            margin-bottom: 20px;
+            padding: 16px;
+            font-size: 1.1rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .transaction-record {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: var(--white);
+            border-radius: 6px;
+            border-left: 3px solid var(--info);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .transaction-record.buy::before {
+            content: '+';
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .transaction-record.sell::before {
+            content: '-';
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .format-examples {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            border: 1px dashed var(--gray);
+        }
+        
+        .format-examples h4 {
+            margin-bottom: 10px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: var(--success);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(100%);
+            transition: transform 0.4s ease;
+        }
+        
+        .notification.show {
+            display: flex;
+            transform: translateX(0);
+        }
+        
+        .drag-handle {
+            cursor: move;
+            margin-right: 12px;
+            color: var(--gray);
+            font-size: 1.2rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+        
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #dee2e6;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        /* 内联SVG图标样式 */
+        .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon svg {
+            width: 1em;
+            height: 1em;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification">
+        <div class="icon">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </div>
+        <span>排行榜已更新，请重新处理交易内容</span>
+    </div>
+    
+    <div class="edit-modal" id="edit-modal">
+        <div class="edit-modal-content">
+            <h3>
+                <div class="icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </div>
+                编辑交易员
+            </h3>
+            <div class="input-group">
+                <label for="edit-trader-name">交易员名称</label>
+                <input type="text" id="edit-trader-name" placeholder="输入交易员名称">
+            </div>
+            <div class="input-group">
+                <label for="edit-trader-rank">目标排名</label>
+                <select id="edit-trader-rank">
+                    <!-- 排名选项将动态生成 -->
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-edit" class="btn-cancel">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </div>
+                    取消
+                </button>
+                <button id="save-edit" class="btn-save">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                    </div>
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>
+                <div class="icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                股票交易排行榜管理系统
+            </h1>
+            <p class="subtitle">智能识别交易数据，自动整理并导出分析报告</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-traders">37</div>
+                <div class="stat-label">交易员总数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="matched-traders">0</div>
+                <div class="stat-label">匹配交易员</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="total-transactions">0</div>
+                <div class="stat-label">交易记录</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/>
+                        </svg>
+                    </div>
+                    管理排行榜
+                </h2>
+                <div class="input-group">
+                    <label for="rank-input">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                        </div>
+                        添加排名项
+                    </label>
+                    <input type="text" id="rank-input" placeholder="输入交易员名称，如：章盟主">
+                    <button id="add-rank-btn">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                        </div>
+                        添加到排行榜
+                    </button>
+                </div>
+                
+                <div class="quick-actions">
+                    <button id="move-to-top-btn">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
+                            </svg>
+                        </div>
+                        移动到顶部
+                    </button>
+                    <button id="move-to-bottom-btn">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/>
+                            </svg>
+                        </div>
+                        移动到底部
+                    </button>
+                </div>
+                
+                <h3>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    当前排行榜 <small>(拖拽或双击项目进行编辑)</small>
+                </h3>
+                <div class="rank-list-container">
+                    <ul id="rank-list" class="rank-list">
+                        <!-- 排行榜项将在这里动态生成 -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                    </div>
+                    输入交易内容
+                </h2>
+                <div class="input-group">
+                    <label for="content-input">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            </svg>
+                        </div>
+                        输入包含交易信息的文本
+                    </label>
+                    <textarea id="content-input" placeholder="请输入交易内容，支持多种格式：
+
+例如：
+1. 标准格式：
+北京光华路
+买入
+中国稀土 5.13亿
+
+2. 连续格式：
+作手新一 买入 多氟多 5153万
+深南东路 卖出 永鼎股份 1.88亿
+
+3. 段落格式：
+陈小群今天买入了华虹公司1.34亿，同时卖出了另一只股票2000万。"></textarea>
+                    <button id="process-btn">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                            </svg>
+                        </div>
+                        处理交易内容
+                    </button>
+                </div>
+                
+                <div class="highlight">
+                    <p><strong>
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/>
+                            </svg>
+                        </div>
+                        智能识别功能：
+                    </strong> 系统可以识别多种格式的交易信息，自动提取交易员、操作类型、股票名称和金额。</p>
+                    <p>
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                            </svg>
+                        </div>
+                        关键词：买入、卖出、交易员名称、股票名称、金额（数字+万/亿）
+                    </p>
+                </div>
+                
+                <div class="format-examples">
+                    <h4>
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                            </svg>
+                        </div>
+                        支持的格式示例：
+                    </h4>
+                    <p>• 标准格式：交易员单独一行，下一行是"买入/卖出"，再下一行是股票和金额</p>
+                    <p>• 连续格式：一行包含交易员、操作、股票和金额</p>
+                    <p>• 段落格式：自然语言描述，系统自动提取关键信息</p>
+                </div>
+            </div>
+            
+            <div class="panel result-panel">
+                <h2>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/>
+                        </svg>
+                    </div>
+                    整理结果
+                </h2>
+                <button id="export-btn" class="export-btn">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        </svg>
+                    </div>
+                    导出为TXT文件
+                </button>
+                <div id="result-container">
+                    <div class="empty-state">
+                        <div class="icon">📥</div>
+                        <h3>暂无处理结果</h3>
+                        <p>请在左侧输入交易内容并点击"处理交易内容"按钮</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>股票交易排行榜管理系统 &copy; 2023 | 智能识别交易数据，生成专业报告</p>
+        </footer>
+    </div>
+
+    <script>
+        // 初始化排行榜数据 - 添加了T王和北京帮
+        let rankings = [
+            '章盟主', '赵老哥', '作手新一', '炒股养家', '方新侠', '孙哥', '小鳄鱼', 
+            '葛卫东', '欢乐海岸', '陈小群', '92 科比', '宁波桑田路', '佛山系', 
+            '一瞬流光', '瑞鹤仙', '呼家楼', '余哥', '温州帮', '山东帮', '成都系', 
+            '北京光华路', '深南东路', '苏南帮', '开源量化派', 'Bike770', '北京炒家', 
+            '中山东路', '叶子阿猪', '湖里大道', '玉兰路', '低位挖掘', '流沙河', 
+            '鑫多多', '城管希', 'N周二', 'T王', '北京帮'
+        ];
+        
+        // DOM元素
+        const rankInput = document.getElementById('rank-input');
+        const addRankBtn = document.getElementById('add-rank-btn');
+        const rankList = document.getElementById('rank-list');
+        const contentInput = document.getElementById('content-input');
+        const processBtn = document.getElementById('process-btn');
+        const resultContainer = document.getElementById('result-container');
+        const exportBtn = document.getElementById('export-btn');
+        const notification = document.getElementById('notification');
+        const editModal = document.getElementById('edit-modal');
+        const editTraderName = document.getElementById('edit-trader-name');
+        const editTraderRank = document.getElementById('edit-trader-rank');
+        const cancelEditBtn = document.getElementById('cancel-edit');
+        const saveEditBtn = document.getElementById('save-edit');
+        const moveToTopBtn = document.getElementById('move-to-top-btn');
+        const moveToBottomBtn = document.getElementById('move-to-bottom-btn');
+        const totalTraders = document.getElementById('total-traders');
+        const matchedTraders = document.getElementById('matched-traders');
+        const totalTransactions = document.getElementById('total-transactions');
+        
+        // 当前编辑的交易员索引
+        let currentEditIndex = -1;
+        
+        // 显示通知
+        function showNotification(message) {
+            notification.querySelector('span').textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 更新统计信息
+        function updateStats(result) {
+            totalTraders.textContent = rankings.length;
+            
+            if (result && result.length > 0) {
+                matchedTraders.textContent = result.length;
+                
+                let transactionCount = 0;
+                result.forEach(trader => {
+                    transactionCount += trader.buy.length + trader.sell.length;
+                });
+                totalTransactions.textContent = transactionCount;
+            } else {
+                matchedTraders.textContent = '0';
+                totalTransactions.textContent = '0';
+            }
+        }
+        
+        // 初始化排行榜显示
+        function renderRankings() {
+            rankList.innerHTML = '';
+            
+            if (rankings.length === 0) {
+                rankList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">👥</div>
+                        <h3>暂无交易员</h3>
+                        <p>请在上方添加交易员到排行榜</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            rankings.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'rank-item';
+                li.setAttribute('data-index', index);
+                li.innerHTML = `
+                    <div class="rank-content">
+                        <span class="drag-handle">☰</span>
+                        <span class="rank-number">${index + 1}</span>
+                        <span class="trader-name">${item}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-small btn-edit">
+                            <div class="icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                            </div>
+                        </button>
+                        <button class="btn-small btn-remove">
+                            <div class="icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                `;
+                rankList.appendChild(li);
+                
+                // 添加编辑按钮事件
+                li.querySelector('.btn-edit').addEventListener('click', () => {
+                    openEditModal(index);
+                });
+                
+                // 添加删除按钮事件
+                li.querySelector('.btn-remove').addEventListener('click', () => {
+                    rankings.splice(index, 1);
+                    renderRankings();
+                    updateStats();
+                    showNotification('已删除交易员，请重新处理交易内容');
+                });
+                
+                // 添加双击编辑事件
+                li.addEventListener('dblclick', () => {
+                    openEditModal(index);
+                });
+            });
+            
+            // 初始化拖拽功能
+            initDragAndDrop();
+            updateStats();
+        }
+        
+        // 初始化拖拽排序
+        function initDragAndDrop() {
+            const rankItems = document.querySelectorAll('.rank-item');
+            let draggedItem = null;
+            
+            rankItems.forEach(item => {
+                item.setAttribute('draggable', true);
+                
+                item.addEventListener('dragstart', function() {
+                    draggedItem = this;
+                    setTimeout(() => {
+                        this.classList.add('dragging');
+                    }, 0);
+                });
+                
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                    draggedItem = null;
+                });
+                
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+                
+                item.addEventListener('dragenter', function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragging-over');
+                });
+                
+                item.addEventListener('dragleave', function() {
+                    this.classList.remove('dragging-over');
+                });
+                
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragging-over');
+                    
+                    if (draggedItem !== this) {
+                        const fromIndex = parseInt(draggedItem.getAttribute('data-index'));
+                        const toIndex = parseInt(this.getAttribute('data-index'));
+                        
+                        // 移动项目
+                        const [movedItem] = rankings.splice(fromIndex, 1);
+                        rankings.splice(toIndex, 0, movedItem);
+                        
+                        // 重新渲染
+                        renderRankings();
+                        showNotification('排行榜已更新，请重新处理交易内容');
+                    }
+                });
+            });
+        }
+        
+        // 打开编辑模态框
+        function openEditModal(index) {
+            currentEditIndex = index;
+            editTraderName.value = rankings[index];
+            
+            // 填充排名选项
+            editTraderRank.innerHTML = '';
+            for (let i = 1; i <= rankings.length; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                if (i === index + 1) {
+                    option.selected = true;
+                }
+                editTraderRank.appendChild(option);
+            }
+            
+            editModal.style.display = 'flex';
+            setTimeout(() => {
+                editModal.classList.add('active');
+            }, 10);
+        }
+        
+        // 关闭编辑模态框
+        function closeEditModal() {
+            editModal.classList.remove('active');
+            setTimeout(() => {
+                editModal.style.display = 'none';
+            }, 400);
+            currentEditIndex = -1;
+        }
+        
+        // 添加新排名项
+        addRankBtn.addEventListener('click', () => {
+            const newRank = rankInput.value.trim();
+            if (newRank && !rankings.includes(newRank)) {
+                rankings.push(newRank);
+                rankInput.value = '';
+                renderRankings();
+                showNotification('已添加新交易员到排行榜，请重新处理交易内容');
+            } else if (rankings.includes(newRank)) {
+                alert('该交易员已在排行榜中');
+            }
+        });
+        
+        // 保存编辑
+        saveEditBtn.addEventListener('click', () => {
+            if (currentEditIndex === -1) return;
+            
+            const newName = editTraderName.value.trim();
+            const newRank = parseInt(editTraderRank.value) - 1;
+            
+            if (!newName) {
+                alert('请输入交易员名称');
+                return;
+            }
+            
+            // 更新名称
+            rankings[currentEditIndex] = newName;
+            
+            // 如果需要调整排名
+            if (newRank !== currentEditIndex) {
+                const [movedItem] = rankings.splice(currentEditIndex, 1);
+                rankings.splice(newRank, 0, movedItem);
+            }
+            
+            renderRankings();
+            closeEditModal();
+            showNotification('排行榜已更新，请重新处理交易内容');
+        });
+        
+        // 取消编辑
+        cancelEditBtn.addEventListener('click', closeEditModal);
+        
+        // 处理交易内容
+        processBtn.addEventListener('click', () => {
+            const content = contentInput.value.trim();
+            if (!content) {
+                alert('请输入交易内容');
+                return;
+            }
+            
+            const result = processContent(content);
+            displayResult(result);
+            updateStats(result);
+        });
+        
+        // 智能解析交易内容
+        function processContent(content) {
+            const result = [];
+            
+            // 按空行分割内容
+            const sections = content.split(/\n\s*\n/);
+            
+            // 遍历所有段落，尝试多种解析方式
+            rankings.forEach(trader => {
+                const traderRecords = {
+                    rank: trader,
+                    buy: [],
+                    sell: []
+                };
+                
+                let foundTrader = false;
+                
+                // 方法1: 标准格式解析 (交易员单独一行)
+                sections.forEach(section => {
+                    const lines = section.split('\n').map(line => line.trim()).filter(line => line);
+                    
+                    if (lines.length > 0 && lines[0] === trader) {
+                        foundTrader = true;
+                        parseStandardFormat(lines, traderRecords);
+                    }
+                });
+                
+                // 方法2: 连续格式解析 (一行包含所有信息)
+                if (!foundTrader) {
+                    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+                    lines.forEach(line => {
+                        if (line.includes(trader)) {
+                            foundTrader = true;
+                            parseContinuousFormat(line, traderRecords);
+                        }
+                    });
+                }
+                
+                // 方法3: 段落格式解析 (自然语言)
+                if (!foundTrader) {
+                    parseParagraphFormat(content, trader, traderRecords);
+                }
+                
+                // 如果有找到该交易员的记录，添加到结果中
+                if (foundTrader && (traderRecords.buy.length > 0 || traderRecords.sell.length > 0)) {
+                    result.push(traderRecords);
+                }
+            });
+            
+            return result;
+        }
+        
+        // 解析标准格式
+        function parseStandardFormat(lines, traderRecords) {
+            let currentAction = '';
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                
+                if (line === '买入' || line.includes('买入')) {
+                    currentAction = 'buy';
+                } else if (line === '卖出' || line.includes('卖出')) {
+                    currentAction = 'sell';
+                } else if (currentAction && line) {
+                    // 提取股票和金额 - 使用更灵活的正则表达式
+                    const stockMatch = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(万|亿)/);
+                    if (stockMatch) {
+                        const stock = stockMatch[1].trim();
+                        const amount = stockMatch[2] + stockMatch[3];
+                        
+                        if (currentAction === 'buy') {
+                            traderRecords.buy.push(`${stock} ${amount}`);
+                        } else if (currentAction === 'sell') {
+                            traderRecords.sell.push(`${stock} ${amount}`);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 解析连续格式
+        function parseContinuousFormat(line, traderRecords) {
+            // 尝试匹配 "交易员 买入/卖出 股票 金额" 格式
+            const buyMatch = line.match(new RegExp(`${trader}.*?买入(.+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`));
+            if (buyMatch) {
+                const stock = buyMatch[1].trim();
+                const amount = buyMatch[2] + buyMatch[3];
+                traderRecords.buy.push(`${stock} ${amount}`);
+            }
+            
+            const sellMatch = line.match(new RegExp(`${trader}.*?卖出(.+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`));
+            if (sellMatch) {
+                const stock = sellMatch[1].trim();
+                const amount = sellMatch[2] + sellMatch[3];
+                traderRecords.sell.push(`${stock} ${amount}`);
+            }
+        }
+        
+        // 解析段落格式
+        function parseParagraphFormat(content, trader, traderRecords) {
+            // 查找包含交易员的句子
+            const sentences = content.split(/[。！？；]/);
+            
+            sentences.forEach(sentence => {
+                if (sentence.includes(trader)) {
+                    // 提取买入信息
+                    const buyMatches = sentence.match(new RegExp(`${trader}.*?买入([^，。！？；]+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`, 'g'));
+                    if (buyMatches) {
+                        buyMatches.forEach(match => {
+                            const stockMatch = match.match(new RegExp(`${trader}.*?买入(.+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`));
+                            if (stockMatch) {
+                                const stock = stockMatch[1].trim();
+                                const amount = stockMatch[2] + stockMatch[3];
+                                traderRecords.buy.push(`${stock} ${amount}`);
+                            }
+                        });
+                    }
+                    
+                    // 提取卖出信息
+                    const sellMatches = sentence.match(new RegExp(`${trader}.*?卖出([^，。！？；]+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`, 'g'));
+                    if (sellMatches) {
+                        sellMatches.forEach(match => {
+                            const stockMatch = match.match(new RegExp(`${trader}.*?卖出(.+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`));
+                            if (stockMatch) {
+                                const stock = stockMatch[1].trim();
+                                const amount = stockMatch[2] + stockMatch[3];
+                                traderRecords.sell.push(`${stock} ${amount}`);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        // 显示处理结果
+        function displayResult(result) {
+            resultContainer.innerHTML = '';
+            
+            if (result.length === 0) {
+                resultContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        <h3>未找到匹配的交易员</h3>
+                        <p>请检查输入内容或排行榜设置</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            result.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                
+                let buyHtml = '';
+                if (item.buy.length > 0) {
+                    buyHtml = '<div><strong>📈 买入:</strong><br>';
+                    item.buy.forEach(record => {
+                        buyHtml += `<div class="transaction-record buy">${record}</div>`;
+                    });
+                    buyHtml += '</div>';
+                } else {
+                    buyHtml = '<div><strong>📈 买入:</strong> 无买入记录</div>';
+                }
+                
+                let sellHtml = '';
+                if (item.sell.length > 0) {
+                    sellHtml = '<div><strong>📉 卖出:</strong><br>';
+                    item.sell.forEach(record => {
+                        sellHtml += `<div class="transaction-record sell">${record}</div>`;
+                    });
+                    sellHtml += '</div>';
+                } else {
+                    sellHtml = '<div><strong>📉 卖出:</strong> 无卖出记录</div>';
+                }
+                
+                div.innerHTML = `
+                    <h3>👔 排名 ${index + 1}: ${item.rank}</h3>
+                    <div class="transaction-details">
+                        ${buyHtml}
+                        ${sellHtml}
+                    </div>
+                `;
+                resultContainer.appendChild(div);
+            });
+        }
+        
+        // 导出为TXT文件
+        exportBtn.addEventListener('click', () => {
+            const resultItems = resultContainer.querySelectorAll('.result-item');
+            if (resultItems.length === 0) {
+                alert('没有可导出的内容，请先处理交易内容');
+                return;
+            }
+            
+            let exportText = '';
+            
+            resultItems.forEach((item, index) => {
+                const rank = item.querySelector('h3').textContent;
+                const traderName = rank.split(': ')[1];
+                const buyDiv = item.querySelector('.transaction-details div:nth-child(1)');
+                const sellDiv = item.querySelector('.transaction-details div:nth-child(2)');
+                
+                let hasContent = false;
+                let traderText = '';
+                
+                // 处理买入记录
+                if (!buyDiv.textContent.includes('无买入记录')) {
+                    traderText += `${traderName}\n`;
+                    traderText += `买入:\n`;
+                    const buyRecords = buyDiv.querySelectorAll('.transaction-record');
+                    buyRecords.forEach(record => {
+                        traderText += `  + ${record.textContent}\n`;
+                    });
+                    traderText += '\n';
+                    hasContent = true;
+                }
+                
+                // 处理卖出记录
+                if (!sellDiv.textContent.includes('无卖出记录')) {
+                    // 如果之前没有添加交易员名称（因为没有买入记录），现在添加
+                    if (!hasContent) {
+                        traderText += `${traderName}\n`;
+                    }
+                    traderText += `卖出:\n`;
+                    const sellRecords = sellDiv.querySelectorAll('.transaction-record');
+                    sellRecords.forEach(record => {
+                        traderText += `  - ${record.textContent}\n`;
+                    });
+                    traderText += '\n';
+                }
+                
+                // 只有当有交易记录时才添加到导出文本
+                if (traderText) {
+                    exportText += traderText;
+                }
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `交易排行榜_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // 初始化页面
+        renderRankings();
+    </script>
+</body>
+</html>
