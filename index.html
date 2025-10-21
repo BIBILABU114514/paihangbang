@@ -734,16 +734,15 @@
 例如：
 佛山系
 买入
-远大控股 1421万
+远大控股1421万
 卖出
-平潭发展
-1.12亿
+平潭发展1.12亿
 
 成都系
 买入
-创新医疗 7966万
-万润科技 5670万
-郑州煤电 1579万"></textarea>
+创新医疗7966万
+万润科技5670万
+郑州煤电1579万"></textarea>
                     <button id="process-btn">
                         <div class="icon">
                             <svg viewBox="0 0 24 24">
@@ -1089,7 +1088,7 @@
             updateStats(result);
         });
         
-        // 智能解析交易内容 - 修复版
+        // 智能解析交易内容 - 重新梳理版
         function processContent(content) {
             const result = [];
             
@@ -1127,11 +1126,6 @@
                     });
                 }
                 
-                // 方法3: 段落格式解析 (自然语言)
-                if (!foundTrader) {
-                    parseParagraphFormat(content, trader, traderRecords);
-                }
-                
                 // 如果有找到该交易员的记录，添加到结果中
                 if (foundTrader && (traderRecords.buy.length > 0 || traderRecords.sell.length > 0)) {
                     result.push(traderRecords);
@@ -1141,69 +1135,79 @@
             return result;
         }
         
-        // 解析复杂格式 - 支持多行交易记录
+        // 解析复杂格式 - 重新梳理版
         function parseComplexFormat(lines, traderRecords) {
             let currentAction = '';
             
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i];
                 
+                // 检查是否是操作行
                 if (line === '买入' || line.includes('买入')) {
                     currentAction = 'buy';
+                    continue;
                 } else if (line === '卖出' || line.includes('卖出')) {
                     currentAction = 'sell';
-                } else if (currentAction && line) {
-                    // 检查是否是股票名称行
-                    const isStockLine = !line.includes('万') && !line.includes('亿') && 
-                                       !line.includes('买入') && !line.includes('卖出');
-                    
-                    if (isStockLine) {
-                        // 这可能是股票名称行，检查下一行是否是金额
-                        if (i + 1 < lines.length) {
-                            const nextLine = lines[i + 1];
-                            const amountMatch = nextLine.match(/(\d+(?:\.\d+)?)\s*(万|亿)/);
-                            
-                            if (amountMatch) {
-                                // 合并股票名称和金额
-                                const stock = line;
-                                const amount = amountMatch[1] + amountMatch[2];
-                                
-                                if (currentAction === 'buy') {
-                                    traderRecords.buy.push(`${stock} ${amount}`);
-                                } else if (currentAction === 'sell') {
-                                    traderRecords.sell.push(`${stock} ${amount}`);
-                                }
-                                
-                                i++; // 跳过下一行
-                            } else {
-                                // 下一行不是金额，可能是新的操作或股票名称
-                                if (currentAction === 'buy') {
-                                    traderRecords.buy.push(`${line}`);
-                                } else if (currentAction === 'sell') {
-                                    traderRecords.sell.push(`${line}`);
-                                }
-                            }
-                        } else {
-                            // 没有下一行，直接添加股票名称
-                            if (currentAction === 'buy') {
-                                traderRecords.buy.push(`${line}`);
-                            } else if (currentAction === 'sell') {
-                                traderRecords.sell.push(`${line}`);
-                            }
+                    continue;
+                }
+                
+                // 如果不是操作行，则处理股票和金额
+                if (currentAction) {
+                    // 尝试匹配 "股票名称金额" 格式 (没有空格)
+                    const stockMatchNoSpace = line.match(/(.+?)(\d+(?:\.\d+)?)(万|亿)/);
+                    if (stockMatchNoSpace) {
+                        const stock = stockMatchNoSpace[1].trim();
+                        const amount = stockMatchNoSpace[2] + stockMatchNoSpace[3];
+                        
+                        if (currentAction === 'buy') {
+                            traderRecords.buy.push(`${stock} ${amount}`);
+                        } else if (currentAction === 'sell') {
+                            traderRecords.sell.push(`${stock} ${amount}`);
                         }
-                    } else {
-                        // 这一行包含金额，直接提取
-                        const stockMatch = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(万|亿)/);
-                        if (stockMatch) {
-                            const stock = stockMatch[1].trim();
-                            const amount = stockMatch[2] + stockMatch[3];
+                        continue;
+                    }
+                    
+                    // 尝试匹配 "股票名称 金额" 格式 (有空格)
+                    const stockMatchWithSpace = line.match(/(.+?)\s+(\d+(?:\.\d+)?)\s*(万|亿)/);
+                    if (stockMatchWithSpace) {
+                        const stock = stockMatchWithSpace[1].trim();
+                        const amount = stockMatchWithSpace[2] + stockMatchWithSpace[3];
+                        
+                        if (currentAction === 'buy') {
+                            traderRecords.buy.push(`${stock} ${amount}`);
+                        } else if (currentAction === 'sell') {
+                            traderRecords.sell.push(`${stock} ${amount}`);
+                        }
+                        continue;
+                    }
+                    
+                    // 如果以上都不匹配，可能是只有股票名称没有金额的行
+                    // 检查下一行是否是金额
+                    if (i + 1 < lines.length) {
+                        const nextLine = lines[i + 1];
+                        const amountMatch = nextLine.match(/(\d+(?:\.\d+)?)\s*(万|亿)/);
+                        
+                        if (amountMatch) {
+                            // 合并股票名称和金额
+                            const stock = line;
+                            const amount = amountMatch[1] + amountMatch[2];
                             
                             if (currentAction === 'buy') {
                                 traderRecords.buy.push(`${stock} ${amount}`);
                             } else if (currentAction === 'sell') {
                                 traderRecords.sell.push(`${stock} ${amount}`);
                             }
+                            
+                            i++; // 跳过下一行
+                            continue;
                         }
+                    }
+                    
+                    // 如果还是没有匹配到金额，只添加股票名称
+                    if (currentAction === 'buy') {
+                        traderRecords.buy.push(`${line}`);
+                    } else if (currentAction === 'sell') {
+                        traderRecords.sell.push(`${line}`);
                     }
                 }
             }
@@ -1225,42 +1229,6 @@
                 const amount = sellMatch[2] + sellMatch[3];
                 traderRecords.sell.push(`${stock} ${amount}`);
             }
-        }
-        
-        // 解析段落格式
-        function parseParagraphFormat(content, trader, traderRecords) {
-            // 查找包含交易员的句子
-            const sentences = content.split(/[。！？；]/);
-            
-            sentences.forEach(sentence => {
-                if (sentence.includes(trader)) {
-                    // 提取买入信息
-                    const buyMatches = sentence.match(new RegExp(`${trader}.*?买入([^，。！？；]+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`, 'g'));
-                    if (buyMatches) {
-                        buyMatches.forEach(match => {
-                            const stockMatch = match.match(new RegExp(`${trader}.*?买入(.+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`));
-                            if (stockMatch) {
-                                const stock = stockMatch[1].trim();
-                                const amount = stockMatch[2] + stockMatch[3];
-                                traderRecords.buy.push(`${stock} ${amount}`);
-                            }
-                        });
-                    }
-                    
-                    // 提取卖出信息
-                    const sellMatches = sentence.match(new RegExp(`${trader}.*?卖出([^，。！？；]+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`, 'g'));
-                    if (sellMatches) {
-                        sellMatches.forEach(match => {
-                            const stockMatch = match.match(new RegExp(`${trader}.*?卖出(.+?)(\\d+(?:\\.\\d+)?)\\s*(万|亿)`));
-                            if (stockMatch) {
-                                const stock = stockMatch[1].trim();
-                                const amount = stockMatch[2] + stockMatch[3];
-                                traderRecords.sell.push(`${stock} ${amount}`);
-                            }
-                        });
-                    }
-                }
-            });
         }
         
         // 显示处理结果
